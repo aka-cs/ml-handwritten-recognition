@@ -8,6 +8,7 @@ image_height = 32
 
 def distortion_free_resize(image, img_size):
     w, h = img_size
+    print(image.shape)
     image = tf.image.resize(image, size=(h, w), preserve_aspect_ratio=True)
 
     # Check tha amount of padding needed to be done.
@@ -64,12 +65,17 @@ def alpha_to_color(image, color=(255, 255, 255)):
     return Image.fromarray(x, 'RGBA')
 
 
-def preprocess_image(image, img_size=(image_width, image_height)):
-    image = np.array(alpha_to_color(Image.fromarray(image, "RGBA")).convert("RGB"))
-    image = tf.image.rgb_to_grayscale(image)
+def preprocess_image(image, img_size=(image_width, image_height), gray=False):
+    if not gray:
+        image = np.array(alpha_to_color(Image.fromarray(image, "RGBA")).convert("RGB"))
+        image = tf.image.rgb_to_grayscale(image)
     image = distortion_free_resize(image, img_size)
     image = tf.cast(image, tf.float32) / 255.0
     return image
+
+
+def process_grayscale_images(images):
+    return tf.data.Dataset.from_tensor_slices([[preprocess_image(image, gray=True) for image in images]])
 
 
 def process_image(images):
